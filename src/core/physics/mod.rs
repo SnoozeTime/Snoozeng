@@ -6,7 +6,7 @@ use rapier2d::dynamics::{
 use rapier2d::geometry::{
     BroadPhase, Collider, ColliderBuilder, ColliderSet, InteractionGroups, NarrowPhase,
 };
-use rapier2d::pipeline::{PhysicsPipeline, QueryPipeline};
+use rapier2d::pipeline::{PhysicsPipeline};
 use serde_derive::{Deserialize, Serialize};
 
 pub struct PhysicConfiguration {
@@ -80,11 +80,11 @@ pub struct CollisionWorld {
 
 impl Default for CollisionWorld {
     fn default() -> Self {
-        let mut pipeline = PhysicsPipeline::new();
+        let pipeline = PhysicsPipeline::new();
         let integration_parameters = IntegrationParameters::default();
-        let mut broad_phase = BroadPhase::new();
-        let mut narrow_phase = NarrowPhase::new();
-        let mut joints = JointSet::new();
+        let broad_phase = BroadPhase::new();
+        let narrow_phase = NarrowPhase::new();
+        let joints = JointSet::new();
 
         Self {
             config: PhysicConfiguration::default(),
@@ -134,7 +134,7 @@ impl CollisionWorld {
 
     pub fn step(&mut self) {
         let gravity = rapier2d::na::Vector2::new(0.0, self.config.gravity);
-        let mut pipeline = &mut self.pipeline;
+        let pipeline = &mut self.pipeline;
         let event_handler = ();
         pipeline.step(
             &gravity,

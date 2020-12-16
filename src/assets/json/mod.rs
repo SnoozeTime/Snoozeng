@@ -1,4 +1,4 @@
-use crate::assets::{Asset, AssetManager, Loader};
+use crate::assets::{Asset, Loader};
 use crate::core::transform::Transform;
 use hecs::{Entity, World};
 use serde_derive::{Deserialize, Serialize};

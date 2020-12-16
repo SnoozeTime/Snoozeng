@@ -21,7 +21,7 @@ use luminance_derive::UniformInterface;
 use luminance_front::tess::Tess;
 use luminance_front::{pipeline::Pipeline, shader::Program, shading_gate::ShadingGate};
 use rand::Rng;
-use rapier2d::na::{Matrix2, Rotation2, Vector3};
+use rapier2d::na::{Rotation2, Vector3};
 use serde_derive::{Deserialize, Serialize};
 use shrev::EventChannel;
 use std::path::Path;

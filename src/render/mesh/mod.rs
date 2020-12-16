@@ -17,7 +17,7 @@ use luminance::texture::Dim2;
 use luminance_derive::{Semantics, UniformInterface, Vertex};
 use luminance_front::shader::Program;
 use luminance_front::{pipeline::Pipeline, shading_gate::ShadingGate, tess::Tess};
-use rapier2d::na::{Matrix4, Point3, Vector3, Vector4};
+
 use serde_derive::{Deserialize, Serialize};
 
 mod sprite_material;

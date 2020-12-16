@@ -1,5 +1,5 @@
 //! Provide a macro to create SerializableEntity that can be saved, sent over network and so on...
-use serde_derive::{Deserialize, Serialize};
+
 
 // fn get_component<T>(world: &hecs::World, e: hecs::Entity) -> Option<T>
 // where

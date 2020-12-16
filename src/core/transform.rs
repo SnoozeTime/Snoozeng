@@ -1,9 +1,9 @@
 use crate::geom2::{Matrix3f, Matrix4f, Vector2f};
-use log::debug;
-use rapier2d::na::{Isometry3, Matrix3, Vector3};
-use rapier2d::ncollide::na::Vector2;
+
+use rapier2d::na::{Matrix3, Vector3};
+
 use serde_derive::{Deserialize, Serialize};
-use std::collections::VecDeque;
+
 
 /// Transform of an element to place it on the screen
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Default)]
@@ -119,7 +119,7 @@ pub struct HasChildren {
     pub children: Vec<hecs::Entity>,
 }
 
-pub fn update_transforms(world: &mut hecs::World) {
+pub fn update_transforms(_world: &mut hecs::World) {
     // TODO FIXME
     // let mut to_process = VecDeque::new();
     // // first gather the entities to update.
