@@ -1,16 +1,17 @@
 use crate::assets::shader::ShaderManager;
 use crate::assets::sprite::SpriteAsset;
 use crate::assets::AssetManager;
-use crate::core::camera::ProjectionMatrix;
+use crate::core::camera::{ProjectionMatrix, VirtualDim};
 use crate::render::mesh::MeshRenderer;
 use crate::render::particle::ParticleSystem;
 use crate::render::path::PathRenderer;
 //use crate::render::sprite::SpriteRenderer;
+use crate::core::window::WindowDim;
 use crate::render::ui::{text, Gui, GuiContext, UiRenderer};
 use crate::resources::Resources;
 use glyph_brush::GlyphBrush;
 use luminance::context::GraphicsContext;
-use luminance::pipeline::{PipelineError, PipelineState, Render};
+use luminance::pipeline::{PipelineError, PipelineState, Render, Viewport};
 use luminance::texture::Dim2;
 use luminance_front::framebuffer::Framebuffer;
 use std::time::Duration;
@@ -83,13 +84,40 @@ impl Renderer {
         let projection_matrix = resources.fetch::<ProjectionMatrix>().unwrap().0.clone();
         let view = crate::core::camera::get_view_matrix(world).unwrap();
 
+        let window_dim = resources.fetch::<WindowDim>().unwrap();
+        let virtual_dim = resources.fetch::<VirtualDim>().unwrap();
+        let aspect_ratio = virtual_dim.aspect();
+
+        let w = window_dim.width;
+        let h = window_dim.height;
+        let (viewport_w, viewport_h, x, y) = if w as f32 > (h as f32 * aspect_ratio).ceil() {
+            let (viewport_w, viewport_h) = ((h as f32 * aspect_ratio).ceil(), h as f32);
+            let y = 0u32;
+            let x = ((w as f32 - viewport_w) / 2.0).round() as u32;
+            (viewport_w, viewport_h, x, y)
+        } else {
+            let (viewport_w, viewport_h) = (w as f32, (w as f32 / aspect_ratio).ceil());
+            let y = ((h as f32 - viewport_h) / 2.0).round() as u32;
+            let x = 0u32;
+            (viewport_w, viewport_h, x, y)
+        };
+
+        //println!("w,h ({}, {})-> ({},{})", w, h, viewport_w, viewport_h);
+
         let mut textures = resources.fetch_mut::<AssetManager<SpriteAsset>>().unwrap();
         let mut shaders = resources.fetch_mut::<ShaderManager>().unwrap();
         surface
             .new_pipeline_gate()
             .pipeline(
                 back_buffer,
-                &PipelineState::default().set_clear_color([0.0, 0.0, 0.0, 1.0]),
+                &PipelineState::default()
+                    .set_viewport(Viewport::Specific {
+                        x,
+                        y,
+                        width: viewport_w as u32,
+                        height: viewport_h as u32,
+                    })
+                    .set_clear_color([0.0, 0.0, 0.0, 1.0]),
                 |pipeline, mut shd_gate| {
                     // self.sprite_renderer.render(
                     //     &pipeline,

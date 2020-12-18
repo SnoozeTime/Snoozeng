@@ -59,3 +59,13 @@ impl ProjectionMatrix {
         self.0 = Matrix4f::new_orthographic(0.0, w, 0.0, h, -1.0, 10.0);
     }
 }
+
+/// Resolution of the game. Independant of window dim
+#[derive(Copy, Clone, Debug)]
+pub struct VirtualDim(pub u32, pub u32);
+
+impl VirtualDim {
+    pub fn aspect(&self) -> f32 {
+        self.0 as f32 / self.1 as f32
+    }
+}

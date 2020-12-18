@@ -2,7 +2,7 @@
 use crate::assets::HotReloader;
 use crate::config::AudioConfig;
 use crate::core::audio::AudioSystem;
-use crate::core::camera::{Camera, ProjectionMatrix};
+use crate::core::camera::{Camera, ProjectionMatrix, VirtualDim};
 use crate::core::input::ser::{InputEvent, VirtualButton, VirtualKey};
 use crate::core::input::{Input, InputAction};
 use crate::core::random::{RandomGenerator, Seed};
@@ -48,20 +48,24 @@ impl<A> GameBuilder<A>
 where
     A: InputAction + 'static,
 {
-    pub fn new() -> Self {
+    pub fn new(window_dim: WindowDim, virtual_dim: VirtualDim) -> Self {
         // resources will need at least an event channel and an input
         let mut resources = Resources::default();
         let chan: EventChannel<GameEvent> = EventChannel::new();
         resources.insert(chan);
 
         // the proj matrix.
-        resources.insert(ProjectionMatrix::new(WIDTH as f32, HEIGHT as f32));
-        resources.insert(WindowDim::new(WIDTH, HEIGHT));
+        resources.insert(ProjectionMatrix::new(
+            virtual_dim.0 as f32,
+            virtual_dim.1 as f32,
+        ));
+        resources.insert(window_dim);
+        resources.insert(virtual_dim);
         resources.insert(DebugQueue::default());
 
         Self {
             physic_config: None,
-            gui_context: GuiContext::new(WindowDim::new(WIDTH, HEIGHT)),
+            gui_context: GuiContext::new(window_dim),
             scene: None,
             resources,
             input_config: None,
@@ -376,8 +380,8 @@ where
         if resize {
             *back_buffer = surface.back_buffer().unwrap();
             let new_size = back_buffer.size();
-            let mut proj = self.resources.fetch_mut::<ProjectionMatrix>().unwrap();
-            proj.resize(new_size[0] as f32, new_size[1] as f32);
+            // let mut proj = self.resources.fetch_mut::<ProjectionMatrix>().unwrap();
+            // proj.resize(new_size[0] as f32, new_size[1] as f32);
 
             let mut dim = self.resources.fetch_mut::<WindowDim>().unwrap();
             dim.resize(new_size[0], new_size[1]);
