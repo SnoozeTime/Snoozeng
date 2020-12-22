@@ -364,7 +364,7 @@ where
                 .resources
                 .fetch_mut::<CollisionWorld>()
                 .expect("Should have a CollisionWorld");
-            collision_world.step();
+            collision_world.step(&self.resources);
             collision_world.synchronize(&self.world);
         }
 

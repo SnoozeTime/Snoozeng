@@ -26,6 +26,7 @@ where
     /// true for pressed
     action_state: HashMap<A, bool>,
     just_pressed: HashSet<A>,
+    just_released: HashSet<A>,
 
     mouse_pos: glam::Vec2,
 
@@ -44,6 +45,7 @@ where
         Self {
             action_state: HashMap::default(),
             just_pressed: HashSet::default(),
+            just_released: HashSet::default(),
             mouse_pos: glam::Vec2::zero(),
             key_mapping,
             mouse_mapping,
@@ -52,6 +54,7 @@ where
 
     pub fn prepare(&mut self) {
         self.just_pressed.clear();
+        self.just_released.clear();
     }
     pub fn process_event(&mut self, ev: InputEvent) {
         match ev {
@@ -64,7 +67,8 @@ where
 
             InputEvent::KeyEvent(key, VirtualAction::Release) => {
                 if let Some(action) = self.key_mapping.get(&key).cloned() {
-                    self.action_state.insert(action, false);
+                    self.action_state.insert(action.clone(), false);
+                    self.just_released.insert(action);
                 }
             }
 
@@ -77,7 +81,8 @@ where
 
             InputEvent::MouseEvent(btn, VirtualAction::Release) => {
                 if let Some(action) = self.mouse_mapping.get(&btn).cloned() {
-                    self.action_state.insert(action, false);
+                    self.action_state.insert(action.clone(), false);
+                    self.just_released.insert(action);
                 }
             }
             InputEvent::CursorPos(x, y) => self.mouse_pos = glam::vec2(x as f32, y as f32),
@@ -99,6 +104,9 @@ where
 
     pub fn is_just_pressed(&self, action: A) -> bool {
         self.just_pressed.contains(&action)
+    }
+    pub fn is_just_released(&self, action: A) -> bool {
+        self.just_released.contains(&action)
     }
 
     pub fn action_down(&self, action: A) -> bool {

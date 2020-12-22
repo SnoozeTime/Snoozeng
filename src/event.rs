@@ -1,3 +1,6 @@
+use rapier2d::geometry::ColliderHandle;
+pub use shrev::*;
+
 #[derive(Debug, Clone)]
 pub enum GameEvent {
     Delete(hecs::Entity),
@@ -7,4 +10,8 @@ pub enum GameEvent {
 
     /// Play some sound
     PlaySound(String),
+
+    /// Collision between entities
+    ProximityEvent(ColliderHandle, ColliderHandle),
+    ContactEvent(ColliderHandle, ColliderHandle),
 }
