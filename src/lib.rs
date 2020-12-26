@@ -25,6 +25,8 @@ pub mod geom2;
 pub use hecs;
 pub use rapier2d;
 
+pub use luminance_front;
+
 #[cfg(not(target_arch = "wasm32"))]
 pub use glfw;
 #[cfg(not(target_arch = "wasm32"))]

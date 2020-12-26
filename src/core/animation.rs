@@ -1,11 +1,10 @@
 use crate::core::timer::Timer;
-use crate::event::GameEvent;
+use crate::event::{CustomGameEvent, EventQueue, GameEvent};
 use crate::render::mesh::{Material, MeshRender};
 //use crate::render::sprite::Sprite;
 use crate::resources::Resources;
 use log::error;
 use serde_derive::{Deserialize, Serialize};
-use shrev::EventChannel;
 use std::collections::HashMap;
 use std::time::Duration;
 
@@ -66,7 +65,10 @@ pub struct AnimationController {
 pub struct AnimationSystem;
 
 impl AnimationSystem {
-    pub fn animate(&mut self, world: &mut hecs::World, dt: Duration, resources: &Resources) {
+    pub fn animate<GE>(&mut self, world: &mut hecs::World, dt: Duration, resources: &Resources)
+    where
+        GE: CustomGameEvent,
+    {
         let mut events = vec![];
         for (e, (controller, render)) in world
             .query::<(&mut AnimationController, &mut MeshRender)>()
@@ -105,7 +107,7 @@ impl AnimationSystem {
         }
 
         {
-            let mut channel = resources.fetch_mut::<EventChannel<GameEvent>>().unwrap();
+            let mut channel = resources.fetch_mut::<EventQueue<GE>>().unwrap();
             channel.drain_vec_write(&mut events);
         }
     }

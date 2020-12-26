@@ -1,5 +1,5 @@
 use crate::core::transform::Transform;
-use crate::event::GameEvent;
+use crate::event::{CustomGameEvent, EventQueue, GameEvent};
 use crate::geom2::Vector2f;
 use crate::resources::Resources;
 use bitflags::_core::cell::RefCell;
@@ -15,7 +15,6 @@ use rapier2d::ncollide::na::Isometry2;
 use rapier2d::ncollide::query::Proximity;
 use rapier2d::pipeline::{EventHandler, PhysicsPipeline};
 use serde_derive::{Deserialize, Serialize};
-use shrev::EventChannel;
 use std::sync::Arc;
 
 pub struct PhysicConfiguration {
@@ -177,10 +176,13 @@ impl CollisionWorld {
         h
     }
 
-    pub fn step(&mut self, resources: &Resources) {
+    pub fn step<GE>(&mut self, resources: &Resources)
+    where
+        GE: CustomGameEvent,
+    {
         let gravity = rapier2d::na::Vector2::new(0.0, self.config.gravity);
         let pipeline = &mut self.pipeline;
-        let mut channel = resources.fetch_mut::<EventChannel<GameEvent>>().unwrap();
+        let mut channel = resources.fetch_mut::<EventQueue<GE>>().unwrap();
 
         let mut events = Arc::new(Mutex::new(vec![]));
         {
@@ -260,9 +262,14 @@ impl CollisionWorld {
     }
 }
 
-struct VecEventHandler(Arc<Mutex<Vec<GameEvent>>>);
+struct VecEventHandler<GE>(Arc<Mutex<Vec<GameEvent<GE>>>>)
+where
+    GE: CustomGameEvent;
 
-impl EventHandler for VecEventHandler {
+impl<GE> EventHandler for VecEventHandler<GE>
+where
+    GE: CustomGameEvent,
+{
     fn handle_proximity_event(&self, event: ProximityEvent) {
         if let Proximity::Intersecting = event.new_status {
             if let Ok(mut events) = self.0.lock() {

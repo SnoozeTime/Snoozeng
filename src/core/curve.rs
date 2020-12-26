@@ -37,6 +37,10 @@ impl<T> Curve<T>
 where
     T: CurveNode,
 {
+    pub fn new(xs: Vec<f32>, ys: Vec<T>) -> Self {
+        Self { xs, ys }
+    }
+
     pub fn y(&self, t: f32) -> T {
         // why use a curve otherwise.
         assert!(self.xs.len() == self.ys.len() && !self.ys.is_empty());

@@ -3,7 +3,7 @@ use crate::assets::{AssetManager, Handle};
 use crate::core::colors::RgbaColor;
 use crate::core::curve::Curve;
 use crate::core::transform::Transform;
-use crate::event::GameEvent;
+use crate::event::{CustomGameEvent, EventQueue, GameEvent};
 use crate::resources::Resources;
 use hecs::World;
 use luminance::blending::{Blending, Equation, Factor};
@@ -23,7 +23,6 @@ use luminance_front::{pipeline::Pipeline, shader::Program, shading_gate::Shading
 use rand::Rng;
 use rapier2d::na::{Rotation2, Vector3};
 use serde_derive::{Deserialize, Serialize};
-use shrev::EventChannel;
 use std::path::Path;
 use std::time::Duration;
 
@@ -42,7 +41,7 @@ struct Particle {
     colors: Curve<RgbaColor>,
     scale: Vector2f,
     scale_over_lifetime: Option<Curve<f32>>,
-
+    damping: f32,
     rotation: f32,
 }
 
@@ -53,13 +52,15 @@ impl Particle {
         origin: Vector2f,
         velocity: Vector2f,
         scale: Vector2f,
+        damping: f32,
         scale_over_lifetime: Option<Curve<f32>>,
         rotation: f32,
     ) {
         self.life = life;
         self.position = origin;
-        self.velocity = velocity;
         self.scale = scale;
+        self.velocity = velocity;
+        self.damping = damping;
         self.scale_over_lifetime = scale_over_lifetime;
         self.initial_life = life;
         self.rotation = rotation;
@@ -71,6 +72,7 @@ impl Particle {
     }
 
     fn update(&mut self, dt: f32) {
+        self.velocity *= (1.0 - self.damping / 1000.0);
         self.position += self.velocity.clone() * dt;
         self.life -= 1; // one frame.
     }
@@ -81,6 +83,7 @@ impl Particle {
 
     fn color(&self) -> RgbaColor {
         let t = self.t();
+        //  println!("{} -> {:?}", t, self.colors.y(t));
         self.colors.y(t)
     }
 
@@ -162,12 +165,14 @@ pub enum ParticleShape {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ParticleEmitter {
-    enabled: bool,
+    pub enabled: bool,
 
     #[serde(skip)]
     particles: ParticlePool,
     pub source: EmitterSource,
     pub shape: ParticleShape,
+
+    pub damping: f32,
 
     pub velocity_range: (f32, f32),
     pub angle_range: (f32, f32),
@@ -176,18 +181,18 @@ pub struct ParticleEmitter {
     pub scale_over_lifetime: Option<Curve<f32>>,
 
     /// Particle per frame to emit.
-    particle_number: f32,
+    pub particle_number: f32,
 
     /// when particle_number < 1, we need to know when we should spawn a particle.
     #[serde(skip)]
-    nb_accumulator: f32,
+    pub nb_accumulator: f32,
 
     /// Color of the particle
     pub colors: Curve<RgbaColor>,
 
     /// How long does the particle (in frames)
     #[serde(default)]
-    particle_life: u32,
+    pub particle_life: u32,
 
     /// Offset applied to a particle position on spawn.
     #[serde(default)]
@@ -202,6 +207,7 @@ impl Default for ParticleEmitter {
     fn default() -> Self {
         Self {
             enabled: true,
+            damping: 0.0,
             particles: Default::default(),
             source: EmitterSource::Point,
             shape: ParticleShape::Quad,
@@ -291,6 +297,7 @@ impl ParticleEmitter {
                                 + self.position_offset.clone(),
                             rotation * (Vector2f::new(speed, 0.0)),
                             scale.clone(),
+                            self.damping,
                             self.scale_over_lifetime.clone(),
                             angle,
                         );
@@ -389,8 +396,11 @@ impl ParticleSystem {
         }
     }
 
-    pub fn update(&mut self, world: &World, dt: Duration, resources: &Resources) {
-        let mut chan = resources.fetch_mut::<EventChannel<GameEvent>>().unwrap();
+    pub fn update<GE>(&mut self, world: &World, dt: Duration, resources: &Resources)
+    where
+        GE: CustomGameEvent,
+    {
+        let mut chan = resources.fetch_mut::<EventQueue<GE>>().unwrap();
         let mut remove_events = vec![];
         for (e, (t, emitter)) in world.query::<(&Transform, &mut ParticleEmitter)>().iter() {
             if !emitter.update(&t.translation, dt.as_secs_f32()) {
@@ -488,9 +498,8 @@ impl ParticleSystem {
 }
 
 fn to_model(scale: &Vector2f, rotation: f32, translation: &Vector2f) -> [[f32; 4]; 4] {
-    let rot_mat = Matrix4f::new_rotation(Vector3::new(0.0, 0.0, rotation));
-    (rot_mat
-        * Matrix4f::new_translation(&Vector3::new(translation.x, translation.y, 0.0))
+    //let rot_mat = Matrix4f::new_rotation(Vector3::new(0.0, 0.0, rotation));
+    (Matrix4f::new_translation(&Vector3::new(translation.x, translation.y, 0.0))
         * Matrix4f::new_nonuniform_scaling(&Vector3::new(scale.x, scale.y, 0.0)))
     .into()
 }

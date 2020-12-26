@@ -7,6 +7,7 @@ use crate::render::particle::ParticleSystem;
 use crate::render::path::PathRenderer;
 //use crate::render::sprite::SpriteRenderer;
 use crate::core::window::WindowDim;
+use crate::event::CustomGameEvent;
 use crate::render::ui::{text, Gui, GuiContext, UiRenderer};
 use crate::resources::Resources;
 use glyph_brush::GlyphBrush;
@@ -155,14 +156,16 @@ impl Renderer {
             .assume()
     }
 
-    pub fn update(
+    pub fn update<GE>(
         &mut self,
         _surface: &mut Context,
         world: &hecs::World,
         dt: Duration,
         resources: &Resources,
-    ) {
+    ) where
+        GE: CustomGameEvent,
+    {
         // update particle systems.
-        self.particle_renderer.update(world, dt, resources);
+        self.particle_renderer.update::<GE>(world, dt, resources);
     }
 }

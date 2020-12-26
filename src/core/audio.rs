@@ -1,18 +1,24 @@
 use crate::config::AudioConfig;
-use crate::event::GameEvent;
+use crate::event::{CustomGameEvent, EventQueue, GameEvent};
 use crate::resources::Resources;
-use shrev::{EventChannel, ReaderId};
+use shrev::ReaderId;
 
-pub struct AudioSystem {
+pub struct AudioSystem<GE>
+where
+    GE: CustomGameEvent,
+{
     current_background: Option<String>,
-    rdr_id: ReaderId<GameEvent>,
+    rdr_id: ReaderId<GameEvent<GE>>,
     config: AudioConfig,
     backend: backend::AudioBackend,
 }
 
-impl AudioSystem {
+impl<GE> AudioSystem<GE>
+where
+    GE: CustomGameEvent,
+{
     pub fn new(resources: &Resources, config: AudioConfig) -> Result<Self, anyhow::Error> {
-        let mut channel = resources.fetch_mut::<EventChannel<GameEvent>>().unwrap();
+        let mut channel = resources.fetch_mut::<EventQueue<GE>>().unwrap();
 
         match backend::AudioBackend::new(&config).map(|backend| Self {
             backend,
@@ -29,7 +35,7 @@ impl AudioSystem {
     }
 
     pub fn process(&mut self, resources: &Resources) {
-        let channel = resources.fetch::<EventChannel<GameEvent>>().unwrap();
+        let channel = resources.fetch::<EventQueue<GE>>().unwrap();
         for ev in channel.read(&mut self.rdr_id) {
             match ev {
                 GameEvent::PlayBackgroundMusic(name) => {
@@ -49,13 +55,19 @@ impl AudioSystem {
     }
 }
 
-pub fn play_background_music(resources: &Resources, name: &str) {
-    let mut channel = resources.fetch_mut::<EventChannel<GameEvent>>().unwrap();
+pub fn play_background_music<GE>(resources: &Resources, name: &str)
+where
+    GE: CustomGameEvent,
+{
+    let mut channel = resources.fetch_mut::<EventQueue<GE>>().unwrap();
     channel.single_write(GameEvent::PlayBackgroundMusic(name.to_string()));
 }
 
-pub fn play_sound(resources: &Resources, name: &str) {
-    let mut channel = resources.fetch_mut::<EventChannel<GameEvent>>().unwrap();
+pub fn play_sound<GE>(resources: &Resources, name: &str)
+where
+    GE: CustomGameEvent,
+{
+    let mut channel = resources.fetch_mut::<EventQueue<GE>>().unwrap();
     channel.single_write(GameEvent::PlaySound(name.to_string()));
 }
 
